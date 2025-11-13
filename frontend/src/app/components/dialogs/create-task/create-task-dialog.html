@@ -1,0 +1,142 @@
+<!-- Modal backdrop -->
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+  (click)="onBackdropClick($event)"
+>
+  <!-- Dialog container -->
+  <div
+    class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-900">Create New Task</h2>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+        (click)="onClose()"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Form content -->
+    <form (ngSubmit)="onSubmit()" class="p-6 space-y-6">
+      <!-- Title -->
+      <div>
+        <label for="task-title" class="block text-sm font-medium text-gray-700 mb-2">
+          Task Title *
+        </label>
+        <input
+          id="task-title"
+          type="text"
+          [(ngModel)]="taskForm.title"
+          name="title"
+          required
+          placeholder="Enter task title..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label for="task-description" class="block text-sm font-medium text-gray-700 mb-2">
+          Description
+        </label>
+        <textarea
+          id="task-description"
+          [(ngModel)]="taskForm.description"
+          name="description"
+          rows="3"
+          placeholder="Enter task description..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        ></textarea>
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label for="task-category" class="block text-sm font-medium text-gray-700 mb-2">
+          Category *
+        </label>
+        <select
+          id="task-category"
+          [(ngModel)]="taskForm.category"
+          name="category"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select a category</option>
+          <option *ngFor="let category of categories" [value]="category">
+            {{ category }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+        <div class="grid grid-cols-3 gap-3">
+          <label *ngFor="let priority of priorities" class="relative">
+            <input
+              type="radio"
+              [value]="priority.value"
+              [(ngModel)]="taskForm.priority"
+              name="priority"
+              class="sr-only"
+            />
+            <div
+              class="px-3 py-2 text-center text-sm font-medium rounded-md cursor-pointer border-2 transition-colors"
+              [class]="
+                taskForm.priority === priority.value
+                  ? priority.color + ' border-current'
+                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+              "
+            >
+              {{ priority.label }}
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Due Date -->
+      <div>
+        <label for="task-due-date" class="block text-sm font-medium text-gray-700 mb-2">
+          Due Date
+        </label>
+        <input
+          id="task-due-date"
+          type="date"
+          [(ngModel)]="taskForm.dueDate"
+          name="dueDate"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="!isFormValid()"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Create Task
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

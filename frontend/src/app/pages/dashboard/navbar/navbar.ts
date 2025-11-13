@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-navbar',
@@ -6,4 +6,6 @@ import { Component, signal } from '@angular/core';
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })
-export class Navbar {}
+export class Navbar {
+  @Input() isOpen = false;
+}

@@ -1,0 +1,44 @@
+// Custom styles for the create task dialog
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.priority-option {
+  transition: all 0.2s ease-in-out;
+}
+
+.priority-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+// Form validation styles
+input:invalid,
+select:invalid,
+textarea:invalid {
+  border-color: #ef4444;
+}
+
+input:valid,
+select:valid,
+textarea:valid {
+  border-color: #10b981;
+}
+
+// Custom scrollbar for dialog content
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
