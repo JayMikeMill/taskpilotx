@@ -94,9 +94,21 @@ MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",  # Angular dev server
+    "http://localhost:4201",  # Alternative Angular port
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow CORS for GraphQL
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+]
+
+# GraphQL Configuration
+GRAPHENE = {
+    'SCHEMA': 'taskpilotx.schema.schema',
+}
 
 from datetime import timedelta
 
