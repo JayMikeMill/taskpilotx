@@ -21,13 +21,23 @@ export interface AuthResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8000/api'; // Django backend URL
+  private readonly apiUrl: string;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient, private userContext: UserContextService) {
+    this.apiUrl = this.getBackendUrl();
     // Check for existing auth token on service initialization
     this.loadUserFromStorage();
+  }
+
+  private getBackendUrl(): string {
+    // Check if we're running on network interface
+    const isNetworkMode =
+      window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    return isNetworkMode
+      ? `http://${window.location.hostname}:8000/api`
+      : 'http://localhost:8000/api';
   }
 
   login(email: string, password: string): Observable<AuthResponse> {

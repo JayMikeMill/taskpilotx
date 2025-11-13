@@ -26,7 +26,12 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.0.101',
+    '0.0.0.0',
+]
 
 
 # Application definition
@@ -44,9 +49,13 @@ INSTALLED_APPS = [
     'graphene_django',
     'users',
     'tasks',
+    'messages_app',
+    'accounts',
+    'actions',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -90,19 +99,44 @@ DATABASES = {
     }
 }
 
-MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
-
+# CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",  # Angular dev server
+    "http://localhost:4200",  # Angular dev server local
     "http://localhost:4201",  # Alternative Angular port
+    "http://127.0.0.1:4200",  # Loopback local
+]
+
+# Allow any local network for development
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+    r"^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$",  # Any local network
+    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$",  # Another common local network
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-# Allow CORS for GraphQL
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
+
+# Additional CORS headers for GraphQL
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
 # GraphQL Configuration
@@ -187,3 +221,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model
+AUTH_USER_MODEL = 'users.User'

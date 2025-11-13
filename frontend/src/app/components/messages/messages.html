@@ -1,0 +1,162 @@
+<!-- Messages Component -->
+<div class="bg-white rounded-lg shadow">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-medium text-gray-900">Messages</h3>
+        @if (unreadMessages.length > 0) {
+        <span class="text-sm text-gray-500"> {{ unreadMessages.length }} unread </span>
+        }
+      </div>
+      <div class="flex items-center space-x-2">
+        <button
+          (click)="toggleFilter()"
+          class="text-sm px-3 py-1 rounded-md transition-colors"
+          [class]="
+            showUnreadOnly
+              ? 'bg-blue-100 text-blue-800'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          "
+        >
+          {{ showUnreadOnly ? 'Show All' : 'Unread Only' }}
+        </button>
+        <button
+          (click)="refreshMessages()"
+          class="text-gray-500 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100"
+          [disabled]="isLoading"
+        >
+          <svg
+            class="w-4 h-4"
+            [class]="isLoading ? 'animate-spin' : ''"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-6">
+    @if (isLoading) {
+    <div class="flex items-center justify-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+    } @else if (error) {
+    <div class="text-center py-8">
+      <div class="text-red-500 mb-2">{{ error }}</div>
+      <button (click)="refreshMessages()" class="text-blue-600 hover:text-blue-800 text-sm">
+        Try Again
+      </button>
+    </div>
+    } @else if (messages.length === 0) {
+    <div class="text-center py-8">
+      <div class="text-gray-500 mb-2">
+        {{ showUnreadOnly ? 'No unread messages' : 'No messages found' }}
+      </div>
+      @if (showUnreadOnly) {
+      <button (click)="toggleFilter()" class="text-blue-600 hover:text-blue-800 text-sm">
+        Show all messages
+      </button>
+      }
+    </div>
+    } @else {
+    <div class="space-y-4 max-h-96 overflow-y-auto">
+      @for (message of messages; track message.id) {
+      <div
+        class="border-l-4 p-4 rounded-r-lg cursor-pointer transition-colors"
+        [class]="
+          getMessageTypeClass(message.messageType) +
+          (message.isRead ? ' opacity-75' : '') +
+          ' hover:shadow-sm'
+        "
+        (click)="markAsRead(message)"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-lg">{{ getMessageTypeIcon(message.messageType) }}</span>
+              <h4
+                class="font-medium text-gray-900"
+                [class]="message.isRead ? 'text-gray-600' : 'text-gray-900'"
+              >
+                {{ message.title }}
+              </h4>
+              @if (!message.isRead) {
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                New
+              </span>
+              }
+            </div>
+
+            <p class="text-sm text-gray-600 mb-2">{{ message.content }}</p>
+
+            @if (message.summary) {
+            <div class="bg-gray-100 p-3 rounded-md mb-2">
+              <h5 class="text-xs font-semibold text-gray-700 mb-1">AI Summary:</h5>
+              <p class="text-sm text-gray-600">{{ message.summary }}</p>
+            </div>
+            }
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4 text-xs text-gray-500">
+                <span>{{ formatMessageDate(message.createdAt) }}</span>
+                @if (message.sender) {
+                <span>from {{ message.sender.firstName }} {{ message.sender.lastName }}</span>
+                } @if (message.task) {
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600"
+                >
+                  📋 {{ message.task.title }}
+                </span>
+                }
+              </div>
+
+              <!-- Action buttons -->
+              <div class="flex items-center space-x-2">
+                @if (!message.summary) {
+                <button
+                  (click)="$event.stopPropagation(); summarizeMessage(message)"
+                  class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded border border-blue-300 hover:bg-blue-50"
+                  [disabled]="isLoading"
+                >
+                  📝 Summarize
+                </button>
+                }
+                <button
+                  (click)="$event.stopPropagation(); archiveMessage(message)"
+                  class="text-gray-600 hover:text-gray-800 text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                >
+                  📁 Archive
+                </button>
+                <button
+                  (click)="$event.stopPropagation(); deleteMessage(message)"
+                  class="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300 hover:bg-red-50"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          </div>
+
+          @if (!message.isRead) {
+          <div class="ml-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>

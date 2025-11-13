@@ -6,7 +6,7 @@
     "shared"
   ],
   "scripts": {
-    "start:frontend": "cd frontend && ng serve",
+    "start:frontend": "cd frontend && ng serve --host 0.0.0.0",
     "start:backend": "cd backend && .\\.venv\\Scripts\\python.exe -u manage.py runserver 0.0.0.0:8000",
     "dev": "concurrently --raw \"npm run start:frontend\" \"npm run start:backend\""
   },

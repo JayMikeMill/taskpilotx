@@ -1,0 +1,75 @@
+/* Tasks Component Styles */
+
+.task-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.task-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.task-checkbox {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.task-checkbox:hover {
+  transform: scale(1.1);
+}
+
+.task-form-modal {
+  backdrop-filter: blur(4px);
+}
+
+.priority-urgent {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Status-specific styling */
+.status-completed .task-title {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.status-overdue {
+  border-left: 4px solid #ef4444;
+}
+
+/* Form validation styling */
+.form-field-error {
+  border-color: #fca5a5;
+}
+
+.form-field-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-filters {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

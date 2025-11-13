@@ -214,6 +214,48 @@ class MarkMessageAsRead(graphene.Mutation):
             return MarkMessageAsRead(success=False, errors=[str(e)])
 
 
+class SummarizeMessage(graphene.Mutation):
+    class Arguments:
+        message_id = graphene.ID(required=True)
+
+    message = graphene.Field(MessageType)
+    success = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+
+    @staticmethod
+    def mutate(root, info, message_id):
+        user = info.context.user
+        if not user.is_authenticated:
+            return SummarizeMessage(success=False, errors=['Authentication required'])
+
+        try:
+            message = Message.objects.get(id=message_id, recipient=user)
+            
+            # AI Summarization stub - replace with actual AI integration later
+            if message.content:
+                # Simple stub summarization - just take first 100 chars with ellipsis
+                content_length = len(message.content)
+                if content_length > 100:
+                    summary = message.content[:100] + "..."
+                else:
+                    summary = message.content
+                
+                # Add AI-like prefix for MVP
+                summary = f"AI Summary: {summary}"
+                
+                message.summary = summary
+                message.save()
+                
+                return SummarizeMessage(message=message, success=True, errors=[])
+            else:
+                return SummarizeMessage(success=False, errors=['Message has no content to summarize'])
+                
+        except Message.DoesNotExist:
+            return SummarizeMessage(success=False, errors=['Message not found or not accessible'])
+        except Exception as e:
+            return SummarizeMessage(success=False, errors=[str(e)])
+
+
 # Queries
 class Query(graphene.ObjectType):
     # Task queries
@@ -311,6 +353,7 @@ class Mutation(graphene.ObjectType):
     delete_task = DeleteTask.Field()
     create_message = CreateMessage.Field()
     mark_message_as_read = MarkMessageAsRead.Field()
+    summarize_message = SummarizeMessage.Field()
 
 
 # Schema

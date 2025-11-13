@@ -67,6 +67,7 @@ class Message(models.Model):
     # Basic info
     title = models.CharField(max_length=255)
     content = models.TextField()
+    summary = models.TextField(blank=True, help_text="AI-generated summary of the message content")
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='info')
     
     # Recipients and sender

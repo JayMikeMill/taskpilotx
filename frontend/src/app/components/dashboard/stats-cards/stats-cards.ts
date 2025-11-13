@@ -1,12 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-export interface TaskStats {
-  total: number;
-  completed: number;
-  pending: number;
-  overdue: number;
-}
+import { TaskStats } from '../../../models';
 
 @Component({
   selector: 'app-stats-cards',
@@ -16,9 +10,14 @@ export interface TaskStats {
 })
 export class StatsCards {
   @Input() stats: TaskStats = {
-    total: 24,
-    completed: 18,
-    pending: 6,
-    overdue: 2,
+    total: 0,
+    completed: 0,
+    pending: 0,
+    overdue: 0,
   };
+
+  get completionRate(): number {
+    if (this.stats.total === 0) return 0;
+    return Math.round((this.stats.completed / this.stats.total) * 100);
+  }
 }

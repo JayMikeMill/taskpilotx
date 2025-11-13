@@ -1,14 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-
-export interface TaskFormData {
-  title: string;
-  description: string;
-  category: string;
-  priority: 'low' | 'medium' | 'high';
-  dueDate: string;
-}
+import { TaskFormData, TaskPriority } from '../../../models';
 
 @Component({
   selector: 'app-create-task-dialog',
@@ -24,17 +17,15 @@ export class CreateTaskDialog {
   taskForm: TaskFormData = {
     title: '',
     description: '',
-    category: '',
     priority: 'medium',
     dueDate: '',
   };
 
-  categories = ['Personal', 'Work', 'Project', 'Meeting', 'Research', 'Development', 'Other'];
-
-  priorities = [
+  priorities: { value: TaskPriority; label: string; color: string }[] = [
     { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
     { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' },
+    { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-800' },
+    { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' },
   ];
 
   onClose() {
@@ -50,14 +41,13 @@ export class CreateTaskDialog {
   }
 
   isFormValid(): boolean {
-    return this.taskForm.title.trim().length > 0 && this.taskForm.category.length > 0;
+    return this.taskForm.title.trim().length > 0;
   }
 
   resetForm() {
     this.taskForm = {
       title: '',
       description: '',
-      category: '',
       priority: 'medium',
       dueDate: '',
     };
@@ -67,5 +57,9 @@ export class CreateTaskDialog {
     if (event.target === event.currentTarget) {
       this.onClose();
     }
+  }
+
+  getTodayDate(): string {
+    return new Date().toISOString().split('T')[0];
   }
 }

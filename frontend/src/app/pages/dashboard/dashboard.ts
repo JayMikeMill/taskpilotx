@@ -1,14 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { Navbar } from './navbar/navbar';
 import { Header } from '../../components/header/header';
 import { WelcomeSection } from '../../components/dashboard/welcome-section/welcome-section';
-import { StatsCards, TaskStats } from '../../components/dashboard/stats-cards/stats-cards';
-import { RecentTasks, Task } from '../../components/dashboard/recent-tasks/recent-tasks';
+import { StatsCards } from '../../components/dashboard/stats-cards/stats-cards';
+import { RecentTasks } from '../../components/dashboard/recent-tasks/recent-tasks';
 import { QuickActions } from '../../components/dashboard/quick-actions/quick-actions';
-import {
-  CreateTaskDialog,
-  TaskFormData,
-} from '../../components/dialogs/create-task/create-task-dialog';
+import { CreateTaskDialog } from '../../components/dialogs/create-task/create-task-dialog';
+import { GraphQLService } from '../../services/graphql.service';
+import { Task, TaskStats, TaskFormData } from '../../models';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,40 +24,55 @@ import {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class Dashboard {
+export class Dashboard implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private graphqlService = inject(GraphQLService);
+
   isMobileMenuOpen = false;
   isCreateTaskDialogOpen = false;
+  isLoading = true;
+  error: string | null = null;
 
   taskStats: TaskStats = {
-    total: 24,
-    completed: 18,
-    pending: 6,
-    overdue: 2,
+    total: 0,
+    completed: 0,
+    pending: 0,
+    overdue: 0,
   };
 
-  recentTasks: Task[] = [
-    {
-      id: 1,
-      title: 'Complete project documentation',
-      dueDate: 'Today',
-      status: 'in-progress',
-      completed: false,
-    },
-    {
-      id: 2,
-      title: 'Review code changes',
-      dueDate: 'Tomorrow',
-      status: 'high-priority',
-      completed: false,
-    },
-    {
-      id: 3,
-      title: 'Update dependencies',
-      dueDate: 'Completed',
-      status: 'completed',
-      completed: true,
-    },
-  ];
+  recentTasks: Task[] = [];
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadDashboardData(): void {
+    this.isLoading = true;
+    this.error = null;
+
+    forkJoin({
+      stats: this.graphqlService.getTaskStats(),
+      recentTasks: this.graphqlService.getRecentTasks(3),
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ stats, recentTasks }) => {
+          this.taskStats = stats;
+          this.recentTasks = recentTasks;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading dashboard data:', error);
+          this.error = 'Failed to load dashboard data';
+          this.isLoading = false;
+        },
+      });
+  }
 
   onToggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -76,25 +91,32 @@ export class Dashboard {
   }
 
   onTaskCreated(taskData: TaskFormData): void {
-    console.log('New task created:', taskData);
-    // TODO: Add task to the tasks list and update stats
-    // For now, let's update the stats as a demo
-    this.taskStats = {
-      ...this.taskStats,
-      total: this.taskStats.total + 1,
-      pending: this.taskStats.pending + 1,
-    };
-
-    // Add to recent tasks
-    const newTask: Task = {
-      id: Date.now(), // Simple ID generation
+    const taskInput = {
       title: taskData.title,
-      dueDate: taskData.dueDate ? new Date(taskData.dueDate).toLocaleDateString() : 'No due date',
-      status: taskData.priority === 'high' ? 'high-priority' : 'in-progress',
-      completed: false,
+      description: taskData.description,
+      priority: taskData.priority || 'medium',
+      dueDate: taskData.dueDate,
     };
 
-    this.recentTasks = [newTask, ...this.recentTasks.slice(0, 2)];
+    this.graphqlService
+      .createTask(taskInput)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.task) {
+            console.log('Task created successfully:', response.task);
+            this.onCloseCreateTaskDialog();
+            this.loadDashboardData(); // Refresh data
+          } else {
+            console.error('Failed to create task:', response.errors);
+            // Handle error - could show a toast notification
+          }
+        },
+        error: (error) => {
+          console.error('Error creating task:', error);
+          // Handle error - could show a toast notification
+        },
+      });
   }
 
   onViewAllTasks(): void {
@@ -105,5 +127,9 @@ export class Dashboard {
   onGenerateReport(): void {
     console.log('Generate report clicked');
     // TODO: Implement report generation
+  }
+
+  onRefreshData(): void {
+    this.loadDashboardData();
   }
 }
