@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
+import { UserContextService } from '../../../services/user-context.service';
 
 @Component({
   selector: 'app-welcome-section',
@@ -7,13 +8,20 @@ import { Component, Input } from '@angular/core';
   styleUrl: './welcome-section.scss',
 })
 export class WelcomeSection {
-  @Input() userName: string = 'User';
   @Input() subtitle: string = "Here's what's happening with your tasks today.";
 
-  get welcomeMessage(): string {
+  private userContext = inject(UserContextService);
+
+  userName = computed(() => {
+    const user = this.userContext.currentUser();
+    return user?.firstName || 'User';
+  });
+
+  welcomeMessage = computed(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return `Good morning, ${this.userName}!`;
-    if (hour < 18) return `Good afternoon, ${this.userName}!`;
-    return `Good evening, ${this.userName}!`;
-  }
+    const name = this.userName();
+    if (hour < 12) return `Good morning, ${name}!`;
+    if (hour < 18) return `Good afternoon, ${name}!`;
+    return `Good evening, ${name}!`;
+  });
 }

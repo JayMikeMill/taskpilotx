@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 
 class Task(models.Model):
     # Basic info
@@ -7,18 +6,18 @@ class Task(models.Model):
     owner = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     
     # Inputs this task monitors (sources)
-    inputs = JSONField(default=list)  
+    inputs = models.JSONField(default=list)  
     # Example: ["gmail", "discord"]
 
     # The user-defined instructions for the AI
     prompt = models.TextField()
 
     # List of actions this task can execute
-    actions = JSONField(default=list)
+    actions = models.JSONField(default=list)
     # Example: ["send_notification", "save_message", "draft_email"]
 
     # Optional settings or metadata
-    settings = JSONField(default=dict)
+    settings = models.JSONField(default=dict)
     # Example: {"priority": "high", "batch_size": 5}
 
     created_at = models.DateTimeField(auto_now_add=True)

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { UserContextService } from './user-context.service';
 
 export interface User {
   id: number;
@@ -24,32 +25,34 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private userContext: UserContextService) {
     // Check for existing auth token on service initialization
     this.loadUserFromStorage();
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    // For now, simulate login with mock data
-    // In production, this would be: return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, { email, password });
-
-    return of({
-      user: {
-        id: 1,
-        firstName: 'John',
-        lastName: 'Doe',
-        email: email,
-        avatar:
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-      },
-      token: 'mock-jwt-token',
-    }).pipe(
-      tap((response) => {
-        this.setCurrentUser(response.user);
-        localStorage.setItem('auth_token', response.token);
-        localStorage.setItem('current_user', JSON.stringify(response.user));
+    return this.http
+      .post<any>(`${this.apiUrl}/users/login/`, {
+        email,
+        password,
       })
-    );
+      .pipe(
+        map((response) => ({
+          user: {
+            id: response.user.id,
+            firstName: response.user.first_name,
+            lastName: response.user.last_name,
+            email: response.user.email,
+            avatar: `https://ui-avatars.com/api/?name=${response.user.first_name}+${response.user.last_name}&background=3b82f6&color=fff&size=256`,
+          },
+          token: response.access,
+        })),
+        tap((response) => {
+          this.setCurrentUser(response.user);
+          localStorage.setItem('auth_token', response.token);
+          localStorage.setItem('current_user', JSON.stringify(response.user));
+        })
+      );
   }
 
   register(
@@ -58,29 +61,45 @@ export class AuthService {
     email: string,
     password: string
   ): Observable<AuthResponse> {
-    // For now, simulate registration with mock data
-    // In production, this would be: return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, { firstName, lastName, email, password });
-
-    return of({
-      user: {
-        id: Date.now(),
-        firstName: firstName,
-        lastName: lastName,
+    return this.http
+      .post<any>(`${this.apiUrl}/users/register/`, {
+        first_name: firstName,
+        last_name: lastName,
         email: email,
-        avatar: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=3b82f6&color=fff&size=256`,
-      },
-      token: 'mock-jwt-token',
-    }).pipe(
-      tap((response) => {
-        this.setCurrentUser(response.user);
-        localStorage.setItem('auth_token', response.token);
-        localStorage.setItem('current_user', JSON.stringify(response.user));
+        password: password,
+        password2: password,
       })
-    );
+      .pipe(
+        tap((backendResponse) => {
+          const user = {
+            id: backendResponse.user.id,
+            firstName: backendResponse.user.first_name,
+            lastName: backendResponse.user.last_name,
+            email: backendResponse.user.email,
+            avatar: `https://ui-avatars.com/api/?name=${backendResponse.user.first_name}+${backendResponse.user.last_name}&background=3b82f6&color=fff&size=256`,
+          };
+
+          this.setCurrentUser(user);
+          localStorage.setItem('auth_token', backendResponse.access);
+          localStorage.setItem('refresh_token', backendResponse.refresh);
+          localStorage.setItem('current_user', JSON.stringify(user));
+        }),
+        map((backendResponse) => ({
+          user: {
+            id: backendResponse.user.id,
+            firstName: backendResponse.user.first_name,
+            lastName: backendResponse.user.last_name,
+            email: backendResponse.user.email,
+            avatar: `https://ui-avatars.com/api/?name=${backendResponse.user.first_name}+${backendResponse.user.last_name}&background=3b82f6&color=fff&size=256`,
+          },
+          token: backendResponse.access,
+        }))
+      );
   }
 
   logout(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('current_user');
     this.currentUserSubject.next(null);
   }
@@ -97,8 +116,13 @@ export class AuthService {
     return localStorage.getItem('auth_token');
   }
 
-  private setCurrentUser(user: User): void {
+  private setCurrentUser(user: User | null): void {
     this.currentUserSubject.next(user);
+    if (user) {
+      this.userContext.setUser(user);
+    } else {
+      this.userContext.clearUser();
+    }
   }
 
   private loadUserFromStorage(): void {

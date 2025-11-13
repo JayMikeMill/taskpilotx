@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { AuthService, User } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
+import { UserContextService } from '../../services/user-context.service';
 
 @Component({
   selector: 'app-header',
@@ -9,19 +10,14 @@ import { AuthService, User } from '../../services/auth.service';
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
-export class Header implements OnInit {
+export class Header {
   @Output() toggleMobileMenu = new EventEmitter<void>();
 
-  currentUser: User | null = null;
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  protected userContext = inject(UserContextService);
+
   isUserMenuOpen = false;
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  ngOnInit() {
-    this.authService.currentUser$.subscribe((user) => {
-      this.currentUser = user;
-    });
-  }
 
   onToggleMobileMenu() {
     this.toggleMobileMenu.emit();
@@ -39,10 +35,5 @@ export class Header implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
     this.closeUserMenu();
-  }
-
-  getUserInitials(): string {
-    if (!this.currentUser) return '';
-    return `${this.currentUser.firstName.charAt(0)}${this.currentUser.lastName.charAt(0)}`;
   }
 }

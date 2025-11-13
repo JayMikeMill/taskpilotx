@@ -50,7 +50,7 @@
     <div class="ml-4 flex items-center space-x-4">
       <!-- Create Task Button (only show when logged in) -->
       <button
-        *ngIf="currentUser"
+        *ngIf="userContext.isLoggedIn()"
         type="button"
         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
       >
@@ -70,7 +70,7 @@
       </button>
 
       <!-- Authentication Links (when not logged in) -->
-      <div *ngIf="!currentUser" class="flex items-center space-x-4">
+      <div *ngIf="!userContext.isLoggedIn()" class="flex items-center space-x-4">
         <a
           routerLink="/login"
           class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
@@ -86,7 +86,7 @@
       </div>
 
       <!-- User Menu (when logged in) -->
-      <div *ngIf="currentUser" class="relative">
+      <div *ngIf="userContext.isLoggedIn()" class="relative">
         <button
           type="button"
           class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -94,18 +94,10 @@
         >
           <!-- User Avatar -->
           <img
-            *ngIf="currentUser.avatar"
             class="h-8 w-8 rounded-full object-cover"
-            [src]="currentUser.avatar"
-            [alt]="currentUser.firstName + ' ' + currentUser.lastName"
+            [src]="userContext.avatar()"
+            [alt]="userContext.fullName()"
           />
-          <!-- Fallback to initials -->
-          <div
-            *ngIf="!currentUser.avatar"
-            class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium"
-          >
-            {{ getUserInitials() }}
-          </div>
         </button>
 
         <!-- Dropdown Menu -->
@@ -118,9 +110,9 @@
             <!-- User Info -->
             <div class="px-4 py-2 border-b border-gray-100">
               <p class="text-sm font-medium text-gray-900">
-                {{ currentUser.firstName }} {{ currentUser.lastName }}
+                {{ userContext.fullName() }}
               </p>
-              <p class="text-sm text-gray-500">{{ currentUser.email }}</p>
+              <p class="text-sm text-gray-500">{{ userContext.currentUser()?.email }}</p>
             </div>
 
             <!-- Menu Items -->

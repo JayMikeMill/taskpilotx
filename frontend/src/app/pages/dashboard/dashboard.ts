@@ -25,7 +25,6 @@ import {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
-  userName = 'John';
   isMobileMenuOpen = false;
   isCreateTaskDialogOpen = false;
 
