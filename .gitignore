@@ -1,0 +1,41 @@
+# =====================
+# Python / Django
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+env/
+venv/
+*.env
+*.pot
+*.py[cod]
+*.log
+*.coverage
+*.pytest_cache/
+django_secret_key.txt
+
+# =====================
+# Node / Angular
+# =====================
+node_modules/
+dist/
+build/
+.tmp/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================
+# VS Code
+# =====================
+.vscode/
+
+# =====================
+# MacOS / Linux / Windows
+# =====================
+.DS_Store
+Thumbs.db
+*.swp
