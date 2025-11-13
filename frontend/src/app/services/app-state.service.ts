@@ -12,11 +12,17 @@ export interface Notification {
   duration?: number;
 }
 
+export interface Breadcrumb {
+  label: string;
+  route?: string;
+}
+
 export interface AppState {
   currentUser: User | null;
   selectedTask: Task | null;
   selectedMessage: Message | null;
   notifications: Notification[];
+  breadcrumbs: Breadcrumb[];
   isLoading: boolean;
   connectionStatus: 'connected' | 'disconnected' | 'connecting';
 }
@@ -31,6 +37,7 @@ export class AppStateService {
     selectedTask: null,
     selectedMessage: null,
     notifications: [],
+    breadcrumbs: [],
     isLoading: false,
     connectionStatus: 'disconnected',
   });
@@ -40,6 +47,7 @@ export class AppStateService {
   readonly selectedTask = computed(() => this.appState().selectedTask);
   readonly selectedMessage = computed(() => this.appState().selectedMessage);
   readonly notifications = computed(() => this.appState().notifications);
+  readonly breadcrumbs = computed(() => this.appState().breadcrumbs);
   readonly isLoading = computed(() => this.appState().isLoading);
   readonly connectionStatus = computed(() => this.appState().connectionStatus);
 
@@ -118,6 +126,14 @@ export class AppStateService {
     this.appState.update((state) => ({
       ...state,
       connectionStatus: status,
+    }));
+  }
+
+  // Breadcrumb management
+  setBreadcrumbs(breadcrumbs: Breadcrumb[]): void {
+    this.appState.update((state) => ({
+      ...state,
+      breadcrumbs,
     }));
   }
 
@@ -246,6 +262,7 @@ export class AppStateService {
       selectedTask: null,
       selectedMessage: null,
       notifications: [],
+      breadcrumbs: [],
       isLoading: false,
       connectionStatus: 'disconnected',
     });

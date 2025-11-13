@@ -29,20 +29,30 @@ export class Login {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(this.loginForm.email, this.loginForm.password).subscribe({
-      next: (response) => {
-        console.log('Login successful', response);
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error) => {
-        console.error('Login failed', error);
-        this.errorMessage = 'Invalid email or password';
-        this.isLoading = false;
-      },
-      complete: () => {
-        this.isLoading = false;
-      },
-    });
+    this.authService
+      .login({
+        email: this.loginForm.email,
+        password: this.loginForm.password,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Login successful', response);
+          if (response.success && response.user) {
+            this.router.navigate(['/dashboard']);
+          } else {
+            this.errorMessage = response.errors?.join(', ') || 'Login failed';
+            this.isLoading = false;
+          }
+        },
+        error: (error) => {
+          console.error('Login failed', error);
+          this.errorMessage = 'Invalid email or password';
+          this.isLoading = false;
+        },
+        complete: () => {
+          this.isLoading = false;
+        },
+      });
   }
 
   isFormValid(): boolean {

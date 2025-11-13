@@ -39,16 +39,22 @@ export class Register {
     this.errorMessage = '';
 
     this.authService
-      .register(
-        this.registerForm.firstName,
-        this.registerForm.lastName,
-        this.registerForm.email,
-        this.registerForm.password
-      )
+      .register({
+        username: this.registerForm.email, // Use email as username for now
+        first_name: this.registerForm.firstName,
+        last_name: this.registerForm.lastName,
+        email: this.registerForm.email,
+        password: this.registerForm.password,
+      })
       .subscribe({
         next: (response: any) => {
           console.log('Registration successful', response);
-          this.router.navigate(['/dashboard']);
+          if (response.success && response.user) {
+            this.router.navigate(['/dashboard']);
+          } else {
+            this.errorMessage = response.errors?.join(', ') || 'Registration failed';
+            this.isLoading = false;
+          }
         },
         error: (error: any) => {
           console.error('Registration failed', error);

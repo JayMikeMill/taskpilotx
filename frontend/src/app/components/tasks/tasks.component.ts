@@ -156,7 +156,6 @@ export class TasksComponent implements OnInit, OnDestroy {
       priority: task.priority,
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
       prompt: task.prompt || '',
-      inputs: task.inputs || [],
       actions: task.actions || [],
     });
     this.showCreateForm.set(true);
@@ -179,8 +178,6 @@ export class TasksComponent implements OnInit, OnDestroy {
       priority: formValue.priority,
       dueDate: formValue.dueDate || undefined,
       prompt: formValue.prompt || undefined,
-      inputs: formValue.inputs || [],
-      actions: formValue.actions || [],
     };
 
     const editingTask = this.editingTask();
@@ -277,6 +274,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     const statusClasses = {
       pending: 'bg-yellow-100 text-yellow-800',
       in_progress: 'bg-blue-100 text-blue-800',
+      active: 'bg-green-100 text-green-800',
+      paused: 'bg-orange-100 text-orange-800',
       completed: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800',
     };

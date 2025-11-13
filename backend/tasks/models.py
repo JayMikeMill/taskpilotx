@@ -1,10 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
+
 
 class Task(models.Model):
+    """Enhanced Task model for AI-driven automation."""
+    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
+        ('active', 'Active'),
+        ('paused', 'Paused'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
@@ -17,78 +21,78 @@ class Task(models.Model):
     ]
     
     # Basic info
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
     
     # Task status and priority
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    completed = models.BooleanField(default=False)
+    
+    # AI prompt for automation
+    prompt = models.TextField(help_text="AI prompt describing when and how this task should execute")
+    
+    # Linked accounts this task monitors
+    linked_accounts = models.ManyToManyField('accounts.LinkedAccount', blank=True, related_name='monitoring_tasks')
+    
+    # Actions this task can execute
+    actions = models.ManyToManyField('actions.Action', blank=True, related_name='tasks')
+    
+    # Execution settings
+    is_active = models.BooleanField(default=True, help_text="Whether this task is actively monitoring")
+    max_executions = models.IntegerField(default=0, help_text="Max executions (0 = unlimited)")
+    execution_count = models.IntegerField(default=0, help_text="Number of times this task has executed")
     
     # Dates
-    due_date = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # AI/Automation related fields
-    # Inputs this task monitors (sources)
-    inputs = models.JSONField(default=list, blank=True)  
-    # Example: ["gmail", "discord"]
-
-    # The user-defined instructions for the AI
-    prompt = models.TextField(blank=True)
-
-    # List of actions this task can execute
-    actions = models.JSONField(default=list, blank=True)
-    # Example: ["send_notification", "save_message", "draft_email"]
-
-    # Optional settings or metadata
-    settings = models.JSONField(default=dict, blank=True)
-    # Example: {"priority": "high", "batch_size": 5}
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    due_date = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_executed_at = models.DateTimeField(null=True, blank=True)
+    
+    # AI processing configuration
+    ai_config = models.JSONField(default=dict, blank=True, help_text="AI processing configuration")
     
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.title} ({self.owner.username})"
+    
+    @property
+    def can_execute(self):
+        """Check if task can execute (active, not exceeded max executions)."""
+        if not self.is_active or self.completed:
+            return False
+        if self.max_executions > 0 and self.execution_count >= self.max_executions:
+            return False
+        return True
 
 
-class Message(models.Model):
-    MESSAGE_TYPES = [
-        ('info', 'Information'),
-        ('warning', 'Warning'),
-        ('error', 'Error'),
-        ('success', 'Success'),
-        ('notification', 'Notification'),
+class TaskExecution(models.Model):
+    """Model to track individual task executions."""
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'), 
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
     ]
     
-    # Basic info
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    summary = models.TextField(blank=True, help_text="AI-generated summary of the message content")
-    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='info')
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='executions')
+    triggering_message = models.ForeignKey('messages_app.Message', on_delete=models.CASCADE, null=True, blank=True)
     
-    # Recipients and sender
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    ai_decision = models.JSONField(default=dict, blank=True, help_text="AI decision and reasoning")
+    actions_executed = models.ManyToManyField('actions.ActionExecution', blank=True)
     
-    # Related task (optional)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='messages', null=True, blank=True)
-    
-    # Status
-    is_read = models.BooleanField(default=False)
-    is_archived = models.BooleanField(default=False)
-    
-    # Metadata
-    metadata = models.JSONField(default=dict, blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    read_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(blank=True, null=True)
     
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-started_at']
     
     def __str__(self):
-        return f"{self.title} - {self.recipient.username}"
+        return f"{self.task.title} execution - {self.status} ({self.started_at.strftime('%Y-%m-%d %H:%M')})"

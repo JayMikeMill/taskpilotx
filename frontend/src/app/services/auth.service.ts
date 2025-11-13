@@ -1,148 +1,199 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { UserContextService } from './user-context.service';
+import { Apollo } from 'apollo-angular';
+import { gql } from 'apollo-angular';
+import { User, AuthResponse, LoginCredentials, RegisterData } from '../models';
 
-export interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  avatar?: string;
-}
+// GraphQL Mutations
+const LOGIN_MUTATION = gql`
+  mutation Login($credentials: LoginInput!) {
+    login(credentials: $credentials) {
+      user {
+        id
+        username
+        email
+        firstName
+        lastName
+        displayName
+        avatar
+        dateJoined
+      }
+      accessToken
+      refreshToken
+      success
+      errors
+    }
+  }
+`;
 
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
+const REGISTER_MUTATION = gql`
+  mutation Register($userData: RegisterInput!) {
+    register(userData: $userData) {
+      user {
+        id
+        username
+        email
+        firstName
+        lastName
+        displayName
+        avatar
+        dateJoined
+      }
+      accessToken
+      refreshToken
+      success
+      errors
+    }
+  }
+`;
+
+const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      username
+      email
+      firstName
+      lastName
+      displayName
+      avatar
+      dateJoined
+    }
+  }
+`;
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly apiUrl: string;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient, private userContext: UserContextService) {
-    this.apiUrl = this.getBackendUrl();
+  // Signal for reactive components
+  currentUser = signal<User | null>(null);
+  isLoggedIn = signal<boolean>(false);
+
+  constructor(private apollo: Apollo) {
     // Check for existing auth token on service initialization
     this.loadUserFromStorage();
   }
 
-  private getBackendUrl(): string {
-    // Check if we're running on network interface
-    const isNetworkMode =
-      window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-    return isNetworkMode
-      ? `http://${window.location.hostname}:8000/api`
-      : 'http://localhost:8000/api';
-  }
-
-  login(email: string, password: string): Observable<AuthResponse> {
-    return this.http
-      .post<any>(`${this.apiUrl}/users/login/`, {
-        email,
-        password,
+  login(credentials: LoginCredentials): Observable<AuthResponse> {
+    return this.apollo
+      .mutate<{ login: AuthResponse }>({
+        mutation: LOGIN_MUTATION,
+        variables: { credentials },
       })
       .pipe(
-        map((response) => ({
-          user: {
-            id: response.user.id,
-            firstName: response.user.first_name,
-            lastName: response.user.last_name,
-            email: response.user.email,
-            avatar: `https://ui-avatars.com/api/?name=${response.user.first_name}+${response.user.last_name}&background=3b82f6&color=fff&size=256`,
-          },
-          token: response.access,
-        })),
+        map((result) => result.data?.login!),
         tap((response) => {
-          this.setCurrentUser(response.user);
-          localStorage.setItem('auth_token', response.token);
-          localStorage.setItem('current_user', JSON.stringify(response.user));
+          if (response.success && response.user) {
+            this.setCurrentUser(response.user);
+            this.storeTokens(response.accessToken, response.refreshToken);
+            this.storeUser(response.user);
+          }
         })
       );
   }
 
-  register(
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string
-  ): Observable<AuthResponse> {
-    return this.http
-      .post<any>(`${this.apiUrl}/users/register/`, {
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        password: password,
-        password2: password,
+  register(userData: RegisterData): Observable<AuthResponse> {
+    return this.apollo
+      .mutate<{ register: AuthResponse }>({
+        mutation: REGISTER_MUTATION,
+        variables: { userData },
       })
       .pipe(
-        tap((backendResponse) => {
-          const user = {
-            id: backendResponse.user.id,
-            firstName: backendResponse.user.first_name,
-            lastName: backendResponse.user.last_name,
-            email: backendResponse.user.email,
-            avatar: `https://ui-avatars.com/api/?name=${backendResponse.user.first_name}+${backendResponse.user.last_name}&background=3b82f6&color=fff&size=256`,
-          };
-
-          this.setCurrentUser(user);
-          localStorage.setItem('auth_token', backendResponse.access);
-          localStorage.setItem('refresh_token', backendResponse.refresh);
-          localStorage.setItem('current_user', JSON.stringify(user));
-        }),
-        map((backendResponse) => ({
-          user: {
-            id: backendResponse.user.id,
-            firstName: backendResponse.user.first_name,
-            lastName: backendResponse.user.last_name,
-            email: backendResponse.user.email,
-            avatar: `https://ui-avatars.com/api/?name=${backendResponse.user.first_name}+${backendResponse.user.last_name}&background=3b82f6&color=fff&size=256`,
-          },
-          token: backendResponse.access,
-        }))
+        map((result) => result.data?.register!),
+        tap((response) => {
+          if (response.success && response.user) {
+            this.setCurrentUser(response.user);
+            this.storeTokens(response.accessToken, response.refreshToken);
+            this.storeUser(response.user);
+          }
+        })
       );
   }
 
   logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('current_user');
-    this.currentUserSubject.next(null);
+    this.clearStorage();
+    this.setCurrentUser(null);
+    // Clear Apollo cache
+    this.apollo.client.resetStore();
   }
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
 
-  isLoggedIn(): boolean {
-    return this.getCurrentUser() !== null;
+  isAuthenticated(): boolean {
+    return this.getCurrentUser() !== null && this.getAccessToken() !== null;
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('auth_token');
+  getAccessToken(): string | null {
+    return localStorage.getItem('access_token');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refresh_token');
+  }
+
+  // Refresh the user data from server
+  refreshUser(): Observable<User | null> {
+    if (!this.getAccessToken()) {
+      return new Observable((observer) => observer.next(null));
+    }
+
+    return this.apollo
+      .query<{ me: User }>({
+        query: ME_QUERY,
+        fetchPolicy: 'network-only',
+      })
+      .pipe(
+        map((result) => result.data?.me || null),
+        tap((user) => {
+          if (user) {
+            this.setCurrentUser(user);
+            this.storeUser(user);
+          } else {
+            this.logout();
+          }
+        })
+      );
   }
 
   private setCurrentUser(user: User | null): void {
     this.currentUserSubject.next(user);
-    if (user) {
-      this.userContext.setUser(user);
-    } else {
-      this.userContext.clearUser();
-    }
+    this.currentUser.set(user);
+    this.isLoggedIn.set(user !== null);
+  }
+
+  private storeTokens(accessToken: string, refreshToken: string): void {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+  }
+
+  private storeUser(user: User): void {
+    localStorage.setItem('current_user', JSON.stringify(user));
+  }
+
+  private clearStorage(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('current_user');
   }
 
   private loadUserFromStorage(): void {
-    const token = localStorage.getItem('auth_token');
+    const token = this.getAccessToken();
     const userJson = localStorage.getItem('current_user');
 
     if (token && userJson) {
       try {
-        const user = JSON.parse(userJson);
+        const user = JSON.parse(userJson) as User;
         this.setCurrentUser(user);
+
+        // Optionally refresh user data from server
+        this.refreshUser().subscribe();
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         this.logout();
@@ -150,21 +201,20 @@ export class AuthService {
     }
   }
 
-  // Update user profile
-  updateProfile(userData: Partial<User>): Observable<User> {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser) {
-      throw new Error('No user logged in');
+  // Token refresh logic (for when access token expires)
+  refreshTokens(): Observable<boolean> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      this.logout();
+      return new Observable((observer) => observer.next(false));
     }
 
-    const updatedUser = { ...currentUser, ...userData };
-
-    // In production, this would be an HTTP request
-    return of(updatedUser).pipe(
-      tap((user) => {
-        this.setCurrentUser(user);
-        localStorage.setItem('current_user', JSON.stringify(user));
-      })
-    );
+    // In a real app, this would call a refresh token mutation
+    // For now, we'll just return false to trigger re-login
+    return new Observable((observer) => {
+      this.logout();
+      observer.next(false);
+    });
   }
 }

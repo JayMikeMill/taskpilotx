@@ -135,24 +135,26 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   getMessageTypeClass(messageType: MessageType): string {
     const typeClasses: { [key in MessageType]: string } = {
-      info: 'border-l-blue-500 bg-blue-50',
-      warning: 'border-l-yellow-500 bg-yellow-50',
-      error: 'border-l-red-500 bg-red-50',
-      success: 'border-l-green-500 bg-green-50',
+      email: 'border-l-blue-500 bg-blue-50',
+      chat: 'border-l-green-500 bg-green-50',
       notification: 'border-l-purple-500 bg-purple-50',
+      system: 'border-l-gray-500 bg-gray-50',
+      task_update: 'border-l-orange-500 bg-orange-50',
+      ai_summary: 'border-l-cyan-500 bg-cyan-50',
     };
-    return typeClasses[messageType] || typeClasses['info'];
+    return typeClasses[messageType] || typeClasses['system'];
   }
 
   getMessageTypeIcon(messageType: MessageType): string {
     const icons: { [key in MessageType]: string } = {
-      info: '🔵',
-      warning: '⚠️',
-      error: '❌',
-      success: '✅',
+      email: '📧',
+      chat: '💬',
       notification: '🔔',
+      system: '⚙️',
+      task_update: '📋',
+      ai_summary: '🤖',
     };
-    return icons[messageType] || icons['info'];
+    return icons[messageType] || icons['system'];
   }
 
   formatMessageDate(dateString: string): string {

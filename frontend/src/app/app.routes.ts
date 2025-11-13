@@ -30,4 +30,24 @@ export const routes: Routes = [
     loadComponent: () => import('./components/messages/messages').then((m) => m.MessagesComponent),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'accounts',
+    loadComponent: () =>
+      import('./components/linked-accounts/linked-accounts.component').then(
+        (m) => m.LinkedAccountsComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./components/notifications/notifications.component').then(
+        (m) => m.NotificationsComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: '**',
+    redirectTo: '/dashboard',
+  },
 ];

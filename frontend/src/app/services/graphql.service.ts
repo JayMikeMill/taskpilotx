@@ -95,7 +95,7 @@ export class GraphQLService {
         refetchQueries: [{ query: GET_MY_TASKS }],
       })
       .pipe(
-        map((result) => result.data?.['createTask'] || { success: false, errors: [] }),
+        map((result) => (result.data as CreateTaskResponse) || { success: false, errors: [] }),
         catchError(this.handleError)
       );
   }
@@ -108,7 +108,7 @@ export class GraphQLService {
         refetchQueries: [{ query: GET_MY_TASKS }],
       })
       .pipe(
-        map((result) => result.data?.['updateTask'] || { success: false, errors: [] }),
+        map((result) => (result.data as UpdateTaskResponse) || { success: false, errors: [] }),
         catchError(this.handleError)
       );
   }
@@ -121,7 +121,7 @@ export class GraphQLService {
         refetchQueries: [{ query: GET_MY_TASKS }],
       })
       .pipe(
-        map((result) => result.data?.['deleteTask'] || { success: false, errors: [] }),
+        map((result) => (result.data as DeleteTaskResponse) || { success: false, errors: [] }),
         catchError(this.handleError)
       );
   }
@@ -191,7 +191,10 @@ export class GraphQLService {
       .pipe(
         map(
           (result) =>
-            result.data?.['markMessageAsRead'] || { success: false, errors: ['Unknown error'] }
+            (result.data as MarkMessageAsReadResponse) || {
+              success: false,
+              errors: ['Unknown error'],
+            }
         ),
         catchError(this.handleError)
       );
@@ -207,7 +210,10 @@ export class GraphQLService {
       .pipe(
         map(
           (result) =>
-            result.data?.['summarizeMessage'] || { success: false, errors: ['Unknown error'] }
+            (result.data as SummarizeMessageResponse) || {
+              success: false,
+              errors: ['Unknown error'],
+            }
         ),
         catchError(this.handleError)
       );

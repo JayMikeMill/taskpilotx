@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { User } from './auth.service';
+import { User } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -13,11 +13,11 @@ export class UserContextService {
   readonly isLoggedIn = computed(() => this.userSignal() !== null);
   readonly fullName = computed(() => {
     const user = this.userSignal();
-    return user ? `${user.firstName} ${user.lastName}` : '';
+    return user ? `${user.first_name} ${user.last_name}` : '';
   });
   readonly initials = computed(() => {
     const user = this.userSignal();
-    return user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '';
+    return user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}` : '';
   });
   readonly avatar = computed(() => {
     const user = this.userSignal();

@@ -17,8 +17,12 @@ export class CreateTaskDialog {
   taskForm: TaskFormData = {
     title: '',
     description: '',
+    status: 'pending',
     priority: 'medium',
+    prompt: '',
     dueDate: '',
+    isActive: true,
+    maxExecutions: 1,
   };
 
   priorities: { value: TaskPriority; label: string; color: string }[] = [
@@ -48,8 +52,12 @@ export class CreateTaskDialog {
     this.taskForm = {
       title: '',
       description: '',
+      status: 'pending',
       priority: 'medium',
+      prompt: '',
       dueDate: '',
+      isActive: true,
+      maxExecutions: 1,
     };
   }
 

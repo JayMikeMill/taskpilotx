@@ -1,145 +1,88 @@
-// User interfaces
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  dateJoined?: string;
-}
+// Re-export all models
+export * from './user.model';
+export * from './task.model';
+export * from './message.model';
+export * from './account.model';
+export * from './action.model';
 
-// Task interfaces
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueDate?: string;
-  completedAt?: string;
-  inputs?: string[];
-  prompt?: string;
-  actions?: string[];
-  settings?: any;
-  createdAt: string;
-  updatedAt?: string;
-  owner: User;
-  messages?: Message[];
-}
-
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-
-export interface TaskInput {
-  title: string;
-  description?: string;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  dueDate?: string;
-  inputs?: string[];
-  prompt?: string;
-  actions?: string[];
-  settings?: any;
-}
-
+// Additional types for forms and responses
 export interface TaskFormData {
   title: string;
   description?: string;
-  priority?: TaskPriority;
+  status: import('./task.model').TaskStatus;
+  priority: import('./task.model').TaskPriority;
+  prompt: string;
   dueDate?: string;
+  isActive: boolean;
+  maxExecutions: number;
+  inputs?: any[];
 }
 
-// Message interfaces
-export interface Message {
-  id: string;
-  title: string;
-  content: string;
-  summary?: string;
-  messageType: MessageType;
-  isRead: boolean;
-  isArchived: boolean;
-  metadata?: any;
-  createdAt: string;
-  readAt?: string;
-  recipient: User;
-  sender?: User;
-  task?: Task;
-}
-
-export type MessageType = 'info' | 'warning' | 'error' | 'success' | 'notification';
-
-export interface MessageInput {
-  title: string;
-  content: string;
-  messageType?: MessageType;
-  recipientId: string;
-  taskId?: string;
-}
-
-// GraphQL Response interfaces
-export interface GraphQLResponse<T> {
-  data?: T;
-  errors?: Array<{
-    message: string;
-    path?: string[];
-  }>;
-}
-
-export interface MutationResponse<T = any> {
-  success: boolean;
-  errors?: string[];
-  [key: string]: T | boolean | string[] | undefined;
-}
-
-export interface CreateTaskResponse extends MutationResponse {
-  task?: Task;
-}
-
-export interface UpdateTaskResponse extends MutationResponse {
-  task?: Task;
-}
-
-export interface DeleteTaskResponse extends MutationResponse {}
-
-export interface CreateMessageResponse extends MutationResponse {
-  message?: Message;
-}
-
-export interface MarkMessageAsReadResponse extends MutationResponse {
-  message?: Message;
-}
-
-export interface SummarizeMessageResponse extends MutationResponse {
-  message?: Message;
-}
-
-// Query response interfaces
+// GraphQL Response types
 export interface GetMyTasksResponse {
-  myTasks: Task[];
+  myTasks: import('./task.model').Task[];
 }
 
 export interface GetTasksByStatusResponse {
-  tasksByStatus: Task[];
+  tasksByStatus: import('./task.model').Task[];
 }
 
 export interface GetTaskResponse {
-  task: Task;
+  task: import('./task.model').Task;
 }
 
 export interface GetMyMessagesResponse {
-  myMessages: Message[];
+  myMessages: import('./message.model').Message[];
 }
 
 export interface GetUnreadMessagesResponse {
-  unreadMessages: Message[];
+  unreadMessages: import('./message.model').Message[];
 }
 
 export interface GetMessagesByTypeResponse {
-  messagesByType: Message[];
+  messagesByType: import('./message.model').Message[];
 }
 
 export interface GetMeResponse {
-  me: User;
+  me: import('./user.model').User;
+}
+
+export interface CreateTaskResponse {
+  task?: import('./task.model').Task;
+  success: boolean;
+  errors?: string[];
+}
+
+export interface UpdateTaskResponse {
+  task?: import('./task.model').Task;
+  success: boolean;
+  errors?: string[];
+}
+
+export interface DeleteTaskResponse {
+  success: boolean;
+  errors?: string[];
+}
+
+export interface CreateMessageResponse {
+  createMessage: {
+    message: import('./message.model').Message;
+    success: boolean;
+    errors?: string[];
+  };
+}
+
+export interface MarkMessageAsReadResponse {
+  message?: import('./message.model').Message;
+  success: boolean;
+  errors?: string[];
+}
+
+export interface SummarizeMessageResponse {
+  message?: import('./message.model').Message;
+  summary?: string;
+  success: boolean;
+  errors?: string[];
 }
 
 // Stats interfaces (for dashboard)
@@ -148,4 +91,18 @@ export interface TaskStats {
   completed: number;
   pending: number;
   overdue: number;
+}
+
+export interface MessageStats {
+  total: number;
+  unprocessed: number;
+  processed: number;
+  failed: number;
+}
+
+export interface DashboardStats {
+  tasks: TaskStats;
+  messages: MessageStats;
+  linkedAccounts: number;
+  activeActions: number;
 }

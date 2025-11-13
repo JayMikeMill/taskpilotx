@@ -14,7 +14,7 @@ export class WelcomeSection {
 
   userName = computed(() => {
     const user = this.userContext.currentUser();
-    return user?.firstName || 'User';
+    return user?.first_name || user?.displayName || 'User';
   });
 
   welcomeMessage = computed(() => {

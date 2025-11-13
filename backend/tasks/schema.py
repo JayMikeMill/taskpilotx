@@ -1,26 +1,20 @@
 import graphene
 from graphene_django import DjangoObjectType
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
-from .models import Task, Message
+from .models import Task, TaskExecution
 
 
 # GraphQL Types
-class UserType(DjangoObjectType):
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined')
-
-
 class TaskType(DjangoObjectType):
     class Meta:
         model = Task
         fields = '__all__'
 
 
-class MessageType(DjangoObjectType):
+class TaskExecutionType(DjangoObjectType):
     class Meta:
-        model = Message
+        model = TaskExecution
         fields = '__all__'
 
 
@@ -30,19 +24,11 @@ class TaskInput(graphene.InputObjectType):
     description = graphene.String()
     status = graphene.String()
     priority = graphene.String()
-    due_date = graphene.DateTime()
-    inputs = graphene.List(graphene.String)
     prompt = graphene.String()
-    actions = graphene.List(graphene.String)
-    settings = graphene.JSONString()
-
-
-class MessageInput(graphene.InputObjectType):
-    title = graphene.String(required=True)
-    content = graphene.String(required=True)
-    message_type = graphene.String()
-    recipient_id = graphene.ID(required=True)
-    task_id = graphene.ID()
+    due_date = graphene.DateTime()
+    is_active = graphene.Boolean()
+    max_executions = graphene.Int()
+    ai_config = graphene.JSONString()
 
 
 # Mutations
@@ -62,16 +48,16 @@ class CreateTask(graphene.Mutation):
 
         try:
             task = Task.objects.create(
+                owner=user,
                 title=task_data.title,
                 description=task_data.get('description', ''),
-                owner=user,
                 status=task_data.get('status', 'pending'),
                 priority=task_data.get('priority', 'medium'),
-                due_date=task_data.get('due_date'),
-                inputs=task_data.get('inputs', []),
                 prompt=task_data.get('prompt', ''),
-                actions=task_data.get('actions', []),
-                settings=task_data.get('settings', {})
+                due_date=task_data.get('due_date'),
+                is_active=task_data.get('is_active', True),
+                max_executions=task_data.get('max_executions', 0),
+                ai_config=task_data.get('ai_config', {})
             )
             return CreateTask(task=task, success=True, errors=[])
         except Exception as e:
@@ -97,28 +83,13 @@ class UpdateTask(graphene.Mutation):
             task = Task.objects.get(id=task_id, owner=user)
             
             # Update fields
-            if task_data.get('title'):
-                task.title = task_data.title
-            if task_data.get('description') is not None:
-                task.description = task_data.description
-            if task_data.get('status'):
-                task.status = task_data.status
-                if task_data.status == 'completed':
-                    task.completed_at = timezone.now()
-                elif task.completed_at and task_data.status != 'completed':
-                    task.completed_at = None
-            if task_data.get('priority'):
-                task.priority = task_data.priority
-            if task_data.get('due_date') is not None:
-                task.due_date = task_data.due_date
-            if task_data.get('inputs') is not None:
-                task.inputs = task_data.inputs
-            if task_data.get('prompt') is not None:
-                task.prompt = task_data.prompt
-            if task_data.get('actions') is not None:
-                task.actions = task_data.actions
-            if task_data.get('settings') is not None:
-                task.settings = task_data.settings
+            for field, value in task_data.items():
+                if value is not None:
+                    setattr(task, field, value)
+            
+            if task_data.get('status') == 'completed':
+                task.completed = True
+                task.completed_at = timezone.now()
                 
             task.save()
             return UpdateTask(task=task, success=True, errors=[])
@@ -151,134 +122,20 @@ class DeleteTask(graphene.Mutation):
             return DeleteTask(success=False, errors=[str(e)])
 
 
-class CreateMessage(graphene.Mutation):
-    class Arguments:
-        message_data = MessageInput(required=True)
-
-    message = graphene.Field(MessageType)
-    success = graphene.Boolean()
-    errors = graphene.List(graphene.String)
-
-    @staticmethod
-    def mutate(root, info, message_data):
-        user = info.context.user
-        if not user.is_authenticated:
-            return CreateMessage(success=False, errors=['Authentication required'])
-
-        try:
-            recipient = User.objects.get(id=message_data.recipient_id)
-            task = None
-            if message_data.get('task_id'):
-                task = Task.objects.get(id=message_data.task_id)
-
-            message = Message.objects.create(
-                title=message_data.title,
-                content=message_data.content,
-                message_type=message_data.get('message_type', 'info'),
-                recipient=recipient,
-                sender=user,
-                task=task
-            )
-            return CreateMessage(message=message, success=True, errors=[])
-        except User.DoesNotExist:
-            return CreateMessage(success=False, errors=['Recipient not found'])
-        except Task.DoesNotExist:
-            return CreateMessage(success=False, errors=['Task not found'])
-        except Exception as e:
-            return CreateMessage(success=False, errors=[str(e)])
-
-
-class MarkMessageAsRead(graphene.Mutation):
-    class Arguments:
-        message_id = graphene.ID(required=True)
-
-    message = graphene.Field(MessageType)
-    success = graphene.Boolean()
-    errors = graphene.List(graphene.String)
-
-    @staticmethod
-    def mutate(root, info, message_id):
-        user = info.context.user
-        if not user.is_authenticated:
-            return MarkMessageAsRead(success=False, errors=['Authentication required'])
-
-        try:
-            message = Message.objects.get(id=message_id, recipient=user)
-            message.is_read = True
-            message.read_at = timezone.now()
-            message.save()
-            return MarkMessageAsRead(message=message, success=True, errors=[])
-        except Message.DoesNotExist:
-            return MarkMessageAsRead(success=False, errors=['Message not found'])
-        except Exception as e:
-            return MarkMessageAsRead(success=False, errors=[str(e)])
-
-
-class SummarizeMessage(graphene.Mutation):
-    class Arguments:
-        message_id = graphene.ID(required=True)
-
-    message = graphene.Field(MessageType)
-    success = graphene.Boolean()
-    errors = graphene.List(graphene.String)
-
-    @staticmethod
-    def mutate(root, info, message_id):
-        user = info.context.user
-        if not user.is_authenticated:
-            return SummarizeMessage(success=False, errors=['Authentication required'])
-
-        try:
-            message = Message.objects.get(id=message_id, recipient=user)
-            
-            # AI Summarization stub - replace with actual AI integration later
-            if message.content:
-                # Simple stub summarization - just take first 100 chars with ellipsis
-                content_length = len(message.content)
-                if content_length > 100:
-                    summary = message.content[:100] + "..."
-                else:
-                    summary = message.content
-                
-                # Add AI-like prefix for MVP
-                summary = f"AI Summary: {summary}"
-                
-                message.summary = summary
-                message.save()
-                
-                return SummarizeMessage(message=message, success=True, errors=[])
-            else:
-                return SummarizeMessage(success=False, errors=['Message has no content to summarize'])
-                
-        except Message.DoesNotExist:
-            return SummarizeMessage(success=False, errors=['Message not found or not accessible'])
-        except Exception as e:
-            return SummarizeMessage(success=False, errors=[str(e)])
-
-
 # Queries
 class Query(graphene.ObjectType):
     # Task queries
-    all_tasks = graphene.List(TaskType)
+    tasks = graphene.List(TaskType, user_id=graphene.Int())
     task = graphene.Field(TaskType, id=graphene.ID(required=True))
     my_tasks = graphene.List(TaskType)
     tasks_by_status = graphene.List(TaskType, status=graphene.String(required=True))
-    
-    # Message queries
-    all_messages = graphene.List(MessageType)
-    message = graphene.Field(MessageType, id=graphene.ID(required=True))
-    my_messages = graphene.List(MessageType)
-    unread_messages = graphene.List(MessageType)
-    messages_by_type = graphene.List(MessageType, message_type=graphene.String(required=True))
-    
-    # User queries
-    me = graphene.Field(UserType)
-    all_users = graphene.List(UserType)
 
-    def resolve_all_tasks(self, info):
+    def resolve_tasks(self, info, user_id=None):
         user = info.context.user
         if not user.is_authenticated:
             return []
+        
+        # Users can only see their own tasks
         return Task.objects.filter(owner=user)
 
     def resolve_task(self, info, id):
@@ -302,59 +159,9 @@ class Query(graphene.ObjectType):
             return []
         return Task.objects.filter(owner=user, status=status)
 
-    def resolve_all_messages(self, info):
-        user = info.context.user
-        if not user.is_authenticated:
-            return []
-        return Message.objects.filter(recipient=user)
-
-    def resolve_message(self, info, id):
-        user = info.context.user
-        if not user.is_authenticated:
-            return None
-        try:
-            return Message.objects.get(id=id, recipient=user)
-        except Message.DoesNotExist:
-            return None
-
-    def resolve_my_messages(self, info):
-        user = info.context.user
-        if not user.is_authenticated:
-            return []
-        return Message.objects.filter(recipient=user)
-
-    def resolve_unread_messages(self, info):
-        user = info.context.user
-        if not user.is_authenticated:
-            return []
-        return Message.objects.filter(recipient=user, is_read=False)
-
-    def resolve_messages_by_type(self, info, message_type):
-        user = info.context.user
-        if not user.is_authenticated:
-            return []
-        return Message.objects.filter(recipient=user, message_type=message_type)
-
-    def resolve_me(self, info):
-        user = info.context.user
-        if user.is_authenticated:
-            return user
-        return None
-
-    def resolve_all_users(self, info):
-        # Only return basic info for privacy
-        return User.objects.all()
-
 
 # Mutations
 class Mutation(graphene.ObjectType):
     create_task = CreateTask.Field()
     update_task = UpdateTask.Field()
     delete_task = DeleteTask.Field()
-    create_message = CreateMessage.Field()
-    mark_message_as_read = MarkMessageAsRead.Field()
-    summarize_message = SummarizeMessage.Field()
-
-
-# Schema
-schema = graphene.Schema(query=Query, mutation=Mutation)
