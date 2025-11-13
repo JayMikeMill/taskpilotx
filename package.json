@@ -1,0 +1,16 @@
+{
+  "name": "taskpilotx",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "start:frontend": "cd frontend && ng serve",
+    "start:backend": "cd backend && .\\.venv\\Scripts\\python.exe -u manage.py runserver 0.0.0.0:8000",
+    "dev": "concurrently --raw \"npm run start:frontend\" \"npm run start:backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
