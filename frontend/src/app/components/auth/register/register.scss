@@ -1,0 +1,24 @@
+// Register page styles
+.register-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.password-strength {
+  transition: all 0.3s ease;
+}
+
+.password-strength.weak {
+  @apply bg-red-100 text-red-800;
+}
+
+.password-strength.medium {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.password-strength.strong {
+  @apply bg-green-100 text-green-800;
+}

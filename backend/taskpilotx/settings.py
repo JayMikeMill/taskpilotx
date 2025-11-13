@@ -84,13 +84,27 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += ['corsheaders', 'graphene_django']
+INSTALLED_APPS += [
+    'corsheaders', 
+    'graphene_django',
+    'rest_framework',
+    'rest_framework_simplejwt'
+]
 
 MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",  # Angular dev server
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    )
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
