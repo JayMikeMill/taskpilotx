@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,10 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jy62ri+h50j$dl4!-zer2n0lxtk1&ihp+d^+6+l)mt8!-pacj!'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -49,7 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'taskpilot_backend.urls'
+ROOT_URLCONF = 'taskpilotx.urls'
 
 TEMPLATES = [
     {
@@ -66,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'taskpilot_backend.wsgi.application'
+WSGI_APPLICATION = 'taskpilotx.wsgi.application'
 
 
 # Database
@@ -75,15 +76,15 @@ WSGI_APPLICATION = 'taskpilot_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'taskpilot_db',
-        'USER': 'postgres',
-        'PASSWORD': 'your_password_here',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'postgres',  # database name from the URL
+        'USER': 'postgres.podnmrbyibkjkcvwjrzo',  # username from the URL
+        'PASSWORD': config('DB_PASSWORD'),  # password from the URL
+        'HOST': 'aws-1-us-east-2.pooler.supabase.com',  # host from the URL
+        'PORT': '5432',  # port from the URL
     }
 }
 
-INSTALLED_APPS += ['corsheaders', 'rest_framework']
+INSTALLED_APPS += ['corsheaders', 'graphene_django']
 
 MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
 
