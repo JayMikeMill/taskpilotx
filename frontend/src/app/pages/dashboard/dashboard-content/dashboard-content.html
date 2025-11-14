@@ -1,0 +1,25 @@
+<!-- Welcome Section -->
+<app-welcome-section></app-welcome-section>
+
+<!-- Stats Cards -->
+<app-stats-cards [stats]="taskStats"></app-stats-cards>
+
+<!-- Recent Tasks and Quick Actions Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Recent Tasks -->
+  <app-recent-tasks [tasks]="recentTasks"></app-recent-tasks>
+
+  <!-- Quick Actions -->
+  <app-quick-actions
+    (createTask)="onCreateTask()"
+    (viewAllTasks)="onViewAllTasks()"
+    (generateReport)="onGenerateReport()"
+  ></app-quick-actions>
+</div>
+
+<!-- Create Task Dialog -->
+<app-create-task-dialog
+  [isOpen]="isCreateTaskDialogOpen"
+  (closeDialog)="onCloseCreateTaskDialog()"
+  (taskCreated)="onTaskCreated($event)"
+></app-create-task-dialog>

@@ -1,34 +1,23 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
-import { Navbar } from '../../shared/components/navbar/navbar';
-import { Header } from '../../components/header/header';
-import { WelcomeSection } from '../../components/dashboard/welcome-section/welcome-section';
-import { StatsCards } from '../../components/dashboard/stats-cards/stats-cards';
-import { RecentTasks } from '../../components/dashboard/recent-tasks/recent-tasks';
-import { QuickActions } from '../../components/dashboard/quick-actions/quick-actions';
-import { CreateTaskDialog } from '../../components/dialogs/create-task/create-task-dialog';
-import { GraphQLService } from '../../services/graphql.service';
-import { Task, TaskStats, TaskFormData } from '../../models';
+import { WelcomeSection } from '../../../components/dashboard/welcome-section/welcome-section';
+import { StatsCards } from '../../../components/dashboard/stats-cards/stats-cards';
+import { RecentTasks } from '../../../components/dashboard/recent-tasks/recent-tasks';
+import { QuickActions } from '../../../components/dashboard/quick-actions/quick-actions';
+import { CreateTaskDialog } from '../../../components/dialogs/create-task/create-task-dialog';
+import { GraphQLService } from '../../../services/graphql.service';
+import { Task, TaskStats, TaskFormData } from '../../../models';
 
 @Component({
-  selector: 'app-dashboard',
-  imports: [
-    Navbar,
-    Header,
-    WelcomeSection,
-    StatsCards,
-    RecentTasks,
-    QuickActions,
-    CreateTaskDialog,
-  ],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  selector: 'app-dashboard-content',
+  imports: [WelcomeSection, StatsCards, RecentTasks, QuickActions, CreateTaskDialog],
+  templateUrl: './dashboard-content.html',
+  styleUrl: './dashboard-content.scss',
 })
-export class Dashboard implements OnInit, OnDestroy {
+export class DashboardContent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private graphqlService = inject(GraphQLService);
 
-  isMobileMenuOpen = false;
   isCreateTaskDialogOpen = false;
   isLoading = true;
   error: string | null = null;
@@ -72,14 +61,6 @@ export class Dashboard implements OnInit, OnDestroy {
           this.isLoading = false;
         },
       });
-  }
-
-  onToggleMobileMenu(): void {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
-  }
-
-  onCloseMobileMenu(): void {
-    this.isMobileMenuOpen = false;
   }
 
   onCreateTask(): void {

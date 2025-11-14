@@ -1,0 +1,99 @@
+<div
+  class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+  [class.border-red-300]="isOverdue()"
+  [class.bg-red-50]="isOverdue()"
+>
+  <div class="flex items-start justify-between">
+    <div class="flex-1">
+      <!-- Task Header -->
+      <div class="flex items-center space-x-3 mb-2">
+        <button
+          (click)="onToggleCompletion()"
+          class="flex-shrink-0"
+          [class.text-green-600]="task.status === 'completed'"
+          [class.text-gray-400]="task.status !== 'completed'"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            @if (task.status === 'completed') {
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"
+            />
+            } @else {
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z"
+              clip-rule="evenodd"
+            />
+            }
+          </svg>
+        </button>
+
+        <h3
+          class="text-lg font-medium text-gray-900"
+          [class.line-through]="task.status === 'completed'"
+          [class.text-gray-500]="task.status === 'completed'"
+        >
+          {{ task.title }}
+        </h3>
+
+        @if (isOverdue()) {
+        <span
+          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+        >
+          Overdue
+        </span>
+        }
+      </div>
+
+      <!-- Task Description -->
+      @if (task.description) {
+      <p class="text-gray-600 mb-3" [class.text-gray-400]="task.status === 'completed'">
+        {{ task.description }}
+      </p>
+      }
+
+      <!-- Task Metadata -->
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <app-task-status-badge [status]="task.status"></app-task-status-badge>
+        <app-task-priority-badge [priority]="task.priority"></app-task-priority-badge>
+
+        @if (task.dueDate) {
+        <span
+          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+        >
+          📅 Due: {{ formatDate(task.dueDate) }}
+        </span>
+        } @if (task.createdAt) {
+        <span class="text-xs text-gray-500"> Created: {{ formatDate(task.createdAt) }} </span>
+        }
+      </div>
+
+      <!-- Task Actions -->
+      <div class="flex items-center space-x-2">
+        @if (task.actions && task.actions.length > 0) {
+        <span class="text-sm text-gray-500"> {{ task.actions.length }} action(s) </span>
+        }
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center space-x-2 ml-4">
+      <button
+        (click)="onEdit()"
+        class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded border border-blue-300 hover:bg-blue-50"
+        title="Edit Task"
+      >
+        ✏️ Edit
+      </button>
+      <button
+        (click)="onDelete()"
+        class="text-red-600 hover:text-red-800 text-sm px-3 py-1 rounded border border-red-300 hover:bg-red-50"
+        title="Delete Task"
+      >
+        🗑️ Delete
+      </button>
+    </div>
+  </div>
+</div>

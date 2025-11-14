@@ -16,35 +16,35 @@ export const routes: Routes = [
     loadComponent: () => import('./components/auth/register/register').then((m) => m.Register),
   },
   {
-    path: 'dashboard',
-    loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+    path: '',
+    loadComponent: () => import('./core/layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [AuthGuard],
-  },
-  {
-    path: 'tasks',
-    loadComponent: () => import('./components/tasks/tasks.component').then((m) => m.TasksComponent),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'messages',
-    loadComponent: () => import('./components/messages/messages').then((m) => m.MessagesComponent),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'accounts',
-    loadComponent: () =>
-      import('./components/linked-accounts/linked-accounts.component').then(
-        (m) => m.LinkedAccountsComponent
-      ),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'notifications',
-    loadComponent: () =>
-      import('./components/notifications/notifications.component').then(
-        (m) => m.NotificationsComponent
-      ),
-    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/dashboard-content/dashboard-content').then(
+            (m) => m.DashboardContent
+          ),
+      },
+      {
+        path: 'tasks',
+        loadComponent: () => import('./pages/tasks/tasks-page').then((m) => m.TasksPage),
+      },
+      {
+        path: 'messages',
+        loadComponent: () => import('./pages/messages/messages-page').then((m) => m.MessagesPage),
+      },
+      {
+        path: 'accounts',
+        loadComponent: () => import('./pages/accounts/accounts-page').then((m) => m.AccountsPage),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./pages/notifications/notifications-page').then((m) => m.NotificationsPage),
+      },
+    ],
   },
   {
     path: '**',

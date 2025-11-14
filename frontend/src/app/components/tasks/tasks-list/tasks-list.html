@@ -1,0 +1,135 @@
+<div class="bg-white rounded-lg shadow">
+  <!-- Header -->
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-gray-900">Tasks</h2>
+      <button
+        (click)="onRefreshTasks()"
+        class="text-gray-500 hover:text-gray-700 p-2 rounded-md hover:bg-gray-100"
+        [disabled]="isLoading()"
+        title="Refresh Tasks"
+      >
+        <svg
+          class="w-5 h-5"
+          [class.animate-spin]="isLoading()"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+    <div class="flex flex-wrap items-center gap-4">
+      <!-- Search -->
+      <div class="flex-1 min-w-64">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
+          placeholder="Search tasks..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <select
+          [value]="statusFilter"
+          (change)="onStatusFilterChange($any($event.target).value)"
+          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All Status</option>
+          @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Priority Filter -->
+      <div>
+        <select
+          [value]="priorityFilter"
+          (change)="onPriorityFilterChange($any($event.target).value)"
+          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All Priority</option>
+          @for (option of priorityOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Results Count -->
+      <div class="text-sm text-gray-600">
+        {{ filteredTasks().length }} of {{ tasks().length }} tasks
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-6">
+    <!-- Error Alert -->
+    @if (error()) {
+    <div class="mb-4">
+      <app-error-alert
+        [message]="error()!"
+        [dismissible]="true"
+        (dismiss)="onDismissError()"
+      ></app-error-alert>
+    </div>
+    }
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+    <app-loading-spinner message="Loading tasks..."></app-loading-spinner>
+    }
+
+    <!-- Empty State -->
+    @else if (filteredTasks().length === 0 && !error()) {
+    <div class="text-center py-12">
+      <svg
+        class="mx-auto h-12 w-12 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        ></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No tasks found</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        @if (tasks().length === 0) { Get started by creating your first task. } @else { Try
+        adjusting your search or filter criteria. }
+      </p>
+    </div>
+    }
+
+    <!-- Task List -->
+    @else {
+    <div class="space-y-4">
+      @for (task of filteredTasks(); track task.id) {
+      <app-task-item
+        [task]="task"
+        (edit)="onEditTask($event)"
+        (delete)="onDeleteTask($event)"
+        (toggleCompletion)="onToggleTaskCompletion($event)"
+      ></app-task-item>
+      }
+    </div>
+    }
+  </div>
+</div>
